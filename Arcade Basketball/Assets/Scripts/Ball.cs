@@ -5,13 +5,16 @@ using UnityEngine;
 public class Ball : MonoBehaviour
 {
     public bool isThrown = false;
-    public bool isSticking = false;
+    public bool isSticking = false; // Add this field
     private Rigidbody rb;
     private Vector3 stickTargetPos;
+    private Collider wallCollider; // Cache the wall collider
 
     void Awake()
     {
         rb = GetComponent<Rigidbody>();
+        // Cache the wall collider
+        wallCollider = GameObject.Find("WallCollider").GetComponent<Collider>();
     }
 
     // Called when player presses
@@ -19,24 +22,79 @@ public class Ball : MonoBehaviour
     {
         isThrown = false;
         isSticking = true;
+        rb.isKinematic = true; // Make kinematic while sticking
 
-        // Get collider world position at finger Y
-        // Assume the collider is named "WallCollider"
-        Collider wall = GameObject.Find("WallCollider").GetComponent<Collider>();
-        Camera cam = Camera.main;
-        float zOnWall = wall.bounds.center.z - wall.bounds.extents.z; // front face of collider
-
-        Vector3 fingerWorld = cam.ScreenToWorldPoint(new Vector3(screenPos.x, screenPos.y, cam.transform.position.z - zOnWall));
-        // Clamp fingerWorld.y within collider bounds
-        float minY = wall.bounds.min.y;
-        float maxY = wall.bounds.max.y;
-        float clampedY = Mathf.Clamp(fingerWorld.y, minY, maxY);
-
-        stickTargetPos = new Vector3(wall.bounds.center.x, clampedY, zOnWall);
-
-        StickToWall();
+        UpdateStickPosition(screenPos);
     }
 
+    public void UpdateStickPosition(Vector3 screenPos)
+    {
+        if (!isSticking) return;
+
+        Camera cam = Camera.main;
+        Ray ray = cam.ScreenPointToRay(screenPos);
+        RaycastHit hit;
+
+        if (Physics.Raycast(ray, out hit, Mathf.Infinity))
+        {
+            if (hit.collider == wallCollider)
+            {
+                // Calculate the offset based on ball's radius (half of scale)
+                float ballRadius = transform.localScale.z * 0.5f;
+                
+                // Always place the ball on the positive Z side of the collider
+                Vector3 targetPos;
+                if (hit.normal.z < 0) // If hitting from front (positive Z)
+                {
+                    targetPos = hit.point - hit.normal * ballRadius;
+                }
+                else // If hitting from back (negative Z), force to front
+                {
+                    targetPos = hit.point + Vector3.forward * ballRadius;
+                }
+
+                // Ensure minimum Z position is always slightly in front of the wall
+                float wallZ = wallCollider.bounds.center.z;
+                if (targetPos.z <= wallZ)
+                {
+                    targetPos.z = wallZ + ballRadius;
+                }
+
+                stickTargetPos = targetPos;
+                
+                // Smooth follow
+                transform.position = Vector3.Lerp(transform.position, stickTargetPos, Time.deltaTime * 50f);
+            }
+        }
+    }
+
+    // Call this in Update while sticking
+    public void StickToWall()
+    {
+        if (!isSticking) return;
+        transform.position = Vector3.Lerp(transform.position, stickTargetPos, Time.deltaTime * 50f);
+    }
+
+    // Called when player releases
+    public void Launch(Vector3 releasePoint) // Replace with your force logic
+    {
+        isThrown = true;
+        isSticking = false;
+        rb.isKinematic = false;
+
+        // Calculate launch direction based on movement
+        Vector3 throwDirection = (releasePoint - transform.position).normalized;
+        float upwardForce = 0.5f; // Adjust this value to control upward angle
+        
+        // Ensure the throw direction has a minimum positive Z component
+        float minZComponent = 0.3f; // Adjust this value to control minimum forward motion
+        throwDirection.z = Mathf.Max(throwDirection.z, minZComponent);
+        
+        Vector3 launchDir = (throwDirection + Vector3.up * upwardForce).normalized;
+        rb.AddForce(launchDir * 1000f); // Adjust force multiplier as needed
+    }
+
+    // Add this to prevent backward movement through the wall
     void OnCollisionEnter(Collision collision)
     {
         if (collision.gameObject.CompareTag("Tray"))
@@ -44,6 +102,14 @@ public class Ball : MonoBehaviour
             isThrown = false;
             rb.velocity = Vector3.zero;
             rb.angularVelocity = Vector3.zero;
+        }
+        else if (collision.gameObject.name == "WallCollider")
+        {
+            // If trying to go backward through the wall, stop the ball
+            if (rb.velocity.z < 0)
+            {
+                rb.velocity = new Vector3(rb.velocity.x, rb.velocity.y, 0);
+            }
         }
     }
 
@@ -56,28 +122,5 @@ public class Ball : MonoBehaviour
             yield return null;
         }
         transform.position = targetPos;
-    }
-
-    // Call this in Update while sticking
-    public void StickToWall()
-    {
-        if (!isSticking) return;
-
-        // Calculate direction to target
-        Vector3 dir = (stickTargetPos - transform.position);
-        float forceMag = 10f * Physics.gravity.magnitude * rb.mass;
-        rb.AddForce(dir.normalized * forceMag, ForceMode.Acceleration);
-    }
-
-    // Called when player releases
-    public void Launch(float force = 50f) // Replace with your force logic
-    {
-        isThrown = true;
-        isSticking = false;
-        rb.isKinematic = false;
-
-        // Launch toward positive z direction with a 45 degree angle
-        Vector3 launchDir = Quaternion.Euler(-45, 0, 0) * Vector3.forward;
-        rb.AddForce(transform.TransformDirection(launchDir) * 100f, ForceMode.Impulse); // force set to 100
     }
 }

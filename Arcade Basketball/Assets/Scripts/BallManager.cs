@@ -6,10 +6,14 @@ public class BallManager : MonoBehaviour
     public List<Ball> balls = new List<Ball>();
     private Ball currentBall;
 
+    public Transform ballsParent;
+
+    private Vector3 lastFingerPosition;
+
     void Start()
     {
         // Find all balls in the scene under BallsParent and add to list
-        Transform ballsParent = GameObject.Find("BallsParent").transform;
+        ballsParent = GameObject.Find("BallsParent").transform;
         foreach (Transform child in ballsParent)
         {
             Ball ballScript = child.GetComponent<Ball>();
@@ -42,13 +46,21 @@ public class BallManager : MonoBehaviour
             {
                 ball.PrepareForThrow(Input.mousePosition);
                 currentBall = ball;
+                lastFingerPosition = Input.mousePosition;
             }
+        }
+
+        // While finger is holding
+        if (Input.GetMouseButton(0) && currentBall != null)
+        {
+            currentBall.UpdateStickPosition(Input.mousePosition);
+            lastFingerPosition = Input.mousePosition;
         }
 
         // Mouse/finger release
         if (Input.GetMouseButtonUp(0) && currentBall != null)
         {
-            currentBall.Launch();
+            currentBall.Launch(lastFingerPosition);
             currentBall = null;
         }
     }

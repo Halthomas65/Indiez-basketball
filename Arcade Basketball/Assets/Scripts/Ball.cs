@@ -76,22 +76,37 @@ public class Ball : MonoBehaviour
     }
 
     // Called when player releases
-    public void Launch(Vector3 releasePoint) // Replace with your force logic
+    public void Launch(Vector3 releasePoint, float force, float upwardAngle = 0.5f)
     {
         isThrown = true;
         isSticking = false;
         rb.isKinematic = false;
 
-        // Calculate launch direction based on movement
-        Vector3 throwDirection = (releasePoint - transform.position).normalized;
-        float upwardForce = 0.5f; // Adjust this value to control upward angle
+        // Convert screen point to world point for direction calculation
+        Camera cam = Camera.main;
+        Vector3 worldReleasePoint = cam.ScreenToWorldPoint(new Vector3(releasePoint.x, releasePoint.y, transform.position.z));
         
-        // Ensure the throw direction has a minimum positive Z component
-        float minZComponent = 0.3f; // Adjust this value to control minimum forward motion
+        // Calculate direction from ball to release point
+        Vector3 throwDirection = (worldReleasePoint - transform.position).normalized;
+        
+        // Ensure minimum forward force
+        float minZComponent = 0.3f;
         throwDirection.z = Mathf.Max(throwDirection.z, minZComponent);
         
-        Vector3 launchDir = (throwDirection + Vector3.up * upwardForce).normalized;
-        rb.AddForce(launchDir * 1000f); // Adjust force multiplier as needed
+        // Add upward component
+        Vector3 launchDir = (throwDirection + Vector3.up * upwardAngle).normalized;
+        
+        // Apply force in fixed direction if too shallow
+        if (Vector3.Dot(launchDir, Vector3.forward) < 0.5f)
+        {
+            launchDir = (Vector3.forward + Vector3.up * upwardAngle).normalized;
+        }
+
+        // Apply force impulse instead of continuous force
+        rb.AddForce(launchDir * force, ForceMode.Impulse);
+        
+        // Add some torque for rotation
+        rb.AddTorque(Random.insideUnitSphere * force * 0.1f);
     }
 
     // Add this to prevent backward movement through the wall

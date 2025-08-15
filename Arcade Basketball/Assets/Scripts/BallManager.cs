@@ -3,6 +3,10 @@ using UnityEngine;
 
 public class BallManager : MonoBehaviour
 {
+    [Header("Launch Settings")]
+    [SerializeField] private float throwForce = 50f;
+    [SerializeField] private float throwAngle = 0.5f;
+
     public List<Ball> balls = new List<Ball>();
     private Ball currentBall;
 
@@ -60,7 +64,7 @@ public class BallManager : MonoBehaviour
         // Mouse/finger release
         if (Input.GetMouseButtonUp(0) && currentBall != null)
         {
-            currentBall.Launch(lastFingerPosition);
+            currentBall.Launch(lastFingerPosition, throwForce, throwAngle);
             currentBall = null;
         }
     }

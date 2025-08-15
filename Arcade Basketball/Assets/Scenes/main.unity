@@ -106,7 +106,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 873b084ab5065d04594958762d02c6e1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  throwForce: 50
+  throwAngle: 0.5
   balls: []
+  ballsParent: {fileID: 0}
 --- !u!4 &1031910219
 Transform:
   m_ObjectHideFlags: 0
@@ -214,7 +217,7 @@ GameObject:
   - component: {fileID: 2878013519775662898}
   - component: {fileID: 2878013519071019727}
   m_Layer: 0
-  m_Name: Cube
+  m_Name: WallCollider
   m_TagString: 
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

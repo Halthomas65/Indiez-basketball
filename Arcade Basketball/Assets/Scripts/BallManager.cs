@@ -4,7 +4,7 @@ using UnityEngine;
 public class BallManager : MonoBehaviour
 {
     [Header("Launch Settings")]
-    [SerializeField] private float throwForce = 50f;
+    [SerializeField] private float throwForce = 80f;
     [SerializeField] private float throwAngle = 0.5f;
 
     public List<Ball> balls = new List<Ball>();

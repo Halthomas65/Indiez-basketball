@@ -1,0 +1,14 @@
+- get ball
+- throw
+- score
+- time
+- save high score
+- perfect effect (dunk)
+
+- select ball
+- apply selected balls
+
+UI:
+- pause
+- move basket
+- select ball

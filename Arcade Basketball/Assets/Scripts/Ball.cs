@@ -86,21 +86,22 @@ public class Ball : MonoBehaviour
         Camera cam = Camera.main;
         Vector3 worldReleasePoint = cam.ScreenToWorldPoint(new Vector3(releasePoint.x, releasePoint.y, transform.position.z));
         
-        // Calculate direction from ball to release point
-        Vector3 throwDirection = (worldReleasePoint - transform.position).normalized;
+        // Get only the horizontal direction (ignore Y component)
+        Vector3 horizontalDir = (transform.position - worldReleasePoint);
+        horizontalDir.y = 0;
+        horizontalDir = horizontalDir.normalized;
         
-        // Ensure minimum forward force
-        float minZComponent = 0.3f;
-        throwDirection.z = Mathf.Max(throwDirection.z, minZComponent);
+        // Create rotation that tilts the horizontal direction upward by desired angle
+        float angleInRadians = 50f * Mathf.Deg2Rad; // 50 degree fixed angle
+        Vector3 launchDir = new Vector3(
+            horizontalDir.x,
+            Mathf.Sin(angleInRadians),
+            horizontalDir.z * Mathf.Cos(angleInRadians)
+        ).normalized;
         
-        // Add upward component
-        Vector3 launchDir = (throwDirection + Vector3.up * upwardAngle).normalized;
-        
-        // Apply force in fixed direction if too shallow
-        if (Vector3.Dot(launchDir, Vector3.forward) < 0.5f)
-        {
-            launchDir = (Vector3.forward + Vector3.up * upwardAngle).normalized;
-        }
+        // Ensure minimum forward motion
+        launchDir.z = Mathf.Max(launchDir.z, 0.3f);
+        launchDir = launchDir.normalized;
 
         // Apply force impulse instead of continuous force
         rb.AddForce(launchDir * force, ForceMode.Impulse);

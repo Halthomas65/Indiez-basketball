@@ -4,9 +4,12 @@
 TagManager:
   serializedVersion: 2
   tags:
-  - ballTag
   - bottomTag
   - Tray
+  - BasketRing
+  - DunkTop
+  - DunkBottom
+  - Ball
   layers:
   - Default
   - TransparentFX

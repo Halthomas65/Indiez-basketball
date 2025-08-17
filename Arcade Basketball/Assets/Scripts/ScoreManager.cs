@@ -2,41 +2,78 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using TMPro;
+using System.IO;
 
 public class ScoreManager : MonoBehaviour
 {
-    [SerializeField] private TextMeshProUGUI highScoreText;
-    [SerializeField] private TextMeshProUGUI timeText;
-    [SerializeField] private TextMeshProUGUI scoreText;
+    [SerializeField] private TextMeshPro highScoreText;    // Changed from TextMeshProUGUI
+    [SerializeField] private TextMeshPro timeText;         // Changed from TextMeshProUGUI
+    [SerializeField] private TextMeshPro scoreText;        // Changed from TextMeshProUGUI
+    [SerializeField] private GameObject perfectDunkObject;
     [SerializeField] private Canvas worldSpaceCanvas;
-    private Camera mainCamera;
+
+    [SerializeField] int timeRemain = 30; // Time limit in seconds
+    int score = 0;
+    int highScore = 0;
+    bool isPerfectDunk = false;
+
+    [SerializeField] private Transform topTrigger;    // Add reference to top trigger
+    [SerializeField] private Transform bottomTrigger; // Add reference to bottom trigger
+    private Dictionary<int, bool> ballPassedTop = new Dictionary<int, bool>();
+    private Dictionary<int, bool> ballTouchedRing = new Dictionary<int, bool>();
+
+    private const string HIGHSCORE_FILE = "highscore.dat";
+    private string highScoreFilePath;
+
+    private bool isGameActive = false;
+    private float currentTime;
+
+    [Header("Dunk Settings")]
+    [SerializeField] private float quickDunkThreshold = 0.07f; // Time threshold for quick dunks
+    private Dictionary<int, float> ballTopTriggerTime = new Dictionary<int, float>();
 
     // Start is called before the first frame update
     void Start()
     {
-        mainCamera = Camera.main;
-        SetupCanvas();
+        ResetGame();
+        if (perfectDunkObject != null)
+            perfectDunkObject.SetActive(false); // Ensure hidden at start
     }
 
-    private void SetupCanvas()
+    void Awake()
     {
-        if (worldSpaceCanvas == null)
-            worldSpaceCanvas = GetComponentInParent<Canvas>();
+        // Set the file path in persistent data path
+        highScoreFilePath = Path.Combine(Application.persistentDataPath, HIGHSCORE_FILE);
+        LoadHighScore();
+    }
 
-        if (worldSpaceCanvas != null)
+    private void LoadHighScore()
+    {
+        try
         {
-            worldSpaceCanvas.worldCamera = mainCamera;
-            worldSpaceCanvas.planeDistance = 100f;
+            if (File.Exists(highScoreFilePath))
+            {
+                string scoreStr = File.ReadAllText(highScoreFilePath);
+                highScore = int.Parse(scoreStr);
+                if (highScoreText != null)
+                    highScoreText.text = highScore.ToString();
+            }
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogError($"Error loading high score: {e.Message}");
+        }
+    }
 
-            // // Position the canvas in front of the camera
-            // RectTransform rectTransform = worldSpaceCanvas.GetComponent<RectTransform>();
-            // if (rectTransform != null)
-            // {
-            //     // Adjust these values based on your scene
-            //     rectTransform.localPosition = new Vector3(0, 0, 47);
-            //     rectTransform.localRotation = Quaternion.Euler(0, 180, 0);
-            //     rectTransform.localScale = new Vector3(0.01f, 0.01f, 0.01f);
-            // }
+    private void SaveHighScore()
+    {
+        try
+        {
+            File.WriteAllText(highScoreFilePath, highScore.ToString());
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogError($"Error saving high score: {e.Message}");
         }
     }
 
@@ -49,6 +86,121 @@ public class ScoreManager : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        if (isGameActive)
+        {
+            currentTime -= Time.deltaTime;
+            
+            if (currentTime <= 0)
+            {
+                EndGame();
+            }
+            else
+            {
+                UpdateTimer();
+            }
+        }
+    }
+
+    private void ResetGame()
+    {
+        score = 0;
+        UpdateScore(score);
+        currentTime = timeRemain;
+        UpdateTimer();
+        isGameActive = false;
+    }
+
+    private void UpdateTimer()
+    {
+        if (timeText != null)
+        {
+            timeText.text = Mathf.CeilToInt(currentTime).ToString();
+        }
+    }
+
+    private void EndGame()
+    {
+        isGameActive = false;
+        currentTime = 0;
+        UpdateTimer();
         
+        // Check and update high score when game ends
+        if (score > highScore)
+        {
+            highScore = score;
+            if (highScoreText != null)
+                highScoreText.text = highScore.ToString();
+            SaveHighScore();
+        }
+    }
+
+    // Call this method when player picks up first ball
+    public void StartGame()
+    {
+        if (!isGameActive)
+        {
+            ResetGame();
+            isGameActive = true;
+        }
+    }
+
+    public void OnBallEnterTopTrigger(GameObject ball)
+    {
+        int ballId = ball.GetInstanceID();
+        ballPassedTop[ballId] = true;
+        ballTopTriggerTime[ballId] = Time.time; // Record time when ball passes top trigger
+    }
+
+    public void OnBallTouchRing(GameObject ball)
+    {
+        int ballId = ball.GetInstanceID();
+        ballTouchedRing[ballId] = true;
+    }
+
+    public void OnBallEnterBottomTrigger(GameObject ball)
+    {
+        if (!isGameActive) return; // Don't score if game isn't active
+        
+        int ballId = ball.GetInstanceID();
+        
+        if (ballPassedTop.ContainsKey(ballId) && ballPassedTop[ballId])
+        {
+            bool isPerfect = !ballTouchedRing.ContainsKey(ballId) || !ballTouchedRing[ballId];
+            bool isQuickDunk = false;
+
+            // Check for quick dunk condition
+            if (!isPerfect && ballTopTriggerTime.ContainsKey(ballId))
+            {
+                float timeThroughHoop = Time.time - ballTopTriggerTime[ballId];
+                isQuickDunk = timeThroughHoop <= quickDunkThreshold;
+            }
+
+            // Award points based on dunk type
+            int points = (isPerfect || isQuickDunk) ? 2 : 1;
+            score += points;
+            UpdateScore(score);
+
+            // Show perfect dunk text for either type of dunk
+            if (isPerfect || isQuickDunk)
+            {
+                isPerfectDunk = true;
+                if (perfectDunkObject != null)
+                    perfectDunkObject.SetActive(true);
+                StartCoroutine(HidePerfectText());
+            }
+
+            // Clean up tracking for this ball
+            ballPassedTop.Remove(ballId);
+            ballTouchedRing.Remove(ballId);
+            ballTopTriggerTime.Remove(ballId);
+        }
+    }
+
+    private IEnumerator HidePerfectText()
+    {
+        yield return new WaitForSeconds(1.5f);
+        if (perfectDunkObject != null)
+            perfectDunkObject.SetActive(false);
+        isPerfectDunk = false;
     }
 }

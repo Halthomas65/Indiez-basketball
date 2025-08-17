@@ -13,6 +13,8 @@ public class TouchManager : MonoBehaviour
     public Transform ballsParent;
 
     private Vector3 lastFingerPosition;
+    private ScoreManager scoreManager;
+    private bool gameStarted = false;
 
     void Start()
     {
@@ -24,6 +26,8 @@ public class TouchManager : MonoBehaviour
             if (ballScript != null)
                 balls.Add(ballScript);
         }
+
+        scoreManager = FindObjectOfType<ScoreManager>();
     }
 
     // Get the next available ball (not thrown)
@@ -48,6 +52,12 @@ public class TouchManager : MonoBehaviour
             Ball ball = GetBall();
             if (ball != null)
             {
+                if (!gameStarted)
+                {
+                    gameStarted = true;
+                    scoreManager.StartGame();
+                }
+
                 ball.PrepareForThrow(Input.mousePosition);
                 currentBall = ball;
                 lastFingerPosition = Input.mousePosition;

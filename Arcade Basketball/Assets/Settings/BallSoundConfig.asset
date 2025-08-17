@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d6149c8b0f02135468f7a999de49482e, type: 3}
+  m_Name: BallSoundConfig
+  m_EditorClassIdentifier: 
+  ballCollisionSounds:
+  - {fileID: 8300000, guid: 0f3790560d9cc084000000000000006f, type: 3}
+  rimCollisionSounds:
+  - {fileID: 8300000, guid: 0e7290560d9cc1c1000000000000006e, type: 3}
+  backboardCollisionSounds:
+  - {fileID: 8300000, guid: b9c95f560d9ccbea0000000000000050, type: 3}
+  - {fileID: 8300000, guid: bf125f560d9ccd310000000000000057, type: 3}
+  swishSound: {fileID: 8300000, guid: be575f560d9ccc740000000000000056, type: 3}
+  bounceInSound: {fileID: 8300000, guid: b88c5f560d9ccaaf0000000000000051, type: 3}
+  dunkSound: {fileID: 8300000, guid: bb435f560d9cc9600000000000000052, type: 3}

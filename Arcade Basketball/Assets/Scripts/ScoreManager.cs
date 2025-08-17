@@ -31,6 +31,11 @@ public class ScoreManager : MonoBehaviour
     [Header("Dunk Settings")]
     [SerializeField] private float quickDunkThreshold = 0.07f; // Time threshold for quick dunks
     private Dictionary<int, float> ballTopTriggerTime = new Dictionary<int, float>();
+    public GameObject dunkParticleSystem; 
+
+    [Header("Sound Configuration")]
+    public BallSoundConfig soundConfig;
+    [SerializeField] private AudioSource audioSource;
 
     // Start is called before the first frame update
     void Start()
@@ -89,7 +94,7 @@ public class ScoreManager : MonoBehaviour
         if (isGameActive)
         {
             currentTime -= Time.deltaTime;
-            
+
             if (currentTime <= 0)
             {
                 EndGame();
@@ -123,7 +128,7 @@ public class ScoreManager : MonoBehaviour
         isGameActive = false;
         currentTime = 0;
         UpdateTimer();
-        
+
         // Check and update high score when game ends
         if (score > highScore)
         {
@@ -160,9 +165,9 @@ public class ScoreManager : MonoBehaviour
     public void OnBallEnterBottomTrigger(GameObject ball)
     {
         if (!isGameActive) return; // Don't score if game isn't active
-        
+
         int ballId = ball.GetInstanceID();
-        
+
         if (ballPassedTop.ContainsKey(ballId) && ballPassedTop[ballId])
         {
             bool isPerfect = !ballTouchedRing.ContainsKey(ballId) || !ballTouchedRing[ballId];
@@ -180,13 +185,19 @@ public class ScoreManager : MonoBehaviour
             score += points;
             UpdateScore(score);
 
-            // Show perfect dunk text for either type of dunk
+            // Show perfect dunk sequence for either type of dunk
             if (isPerfect || isQuickDunk)
             {
                 isPerfectDunk = true;
                 if (perfectDunkObject != null)
                     perfectDunkObject.SetActive(true);
-                StartCoroutine(HidePerfectText());
+                if (audioSource && soundConfig && soundConfig.dunkSound)
+                    audioSource.PlayOneShot(soundConfig.dunkSound, 1f);
+                if (dunkParticleSystem != null)
+                {
+                    dunkParticleSystem.SetActive(true);
+                }
+                StartCoroutine(EndPerfectAct());
             }
 
             // Clean up tracking for this ball
@@ -196,11 +207,13 @@ public class ScoreManager : MonoBehaviour
         }
     }
 
-    private IEnumerator HidePerfectText()
+    private IEnumerator EndPerfectAct()
     {
         yield return new WaitForSeconds(1.5f);
         if (perfectDunkObject != null)
             perfectDunkObject.SetActive(false);
+        if (dunkParticleSystem != null)
+            dunkParticleSystem.SetActive(false);
         isPerfectDunk = false;
     }
 }

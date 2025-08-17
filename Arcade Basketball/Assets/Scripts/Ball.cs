@@ -10,11 +10,23 @@ public class Ball : MonoBehaviour
     private Vector3 stickTargetPos;
     private Collider wallCollider; // Cache the wall collider
 
+    [Header("Sound Configuration")]
+    public BallSoundConfig soundConfig;
+    [SerializeField] private AudioSource audioSource;
+
     void Awake()
     {
         rb = GetComponent<Rigidbody>();
         // Cache the wall collider
         wallCollider = GameObject.Find("WallCollider").GetComponent<Collider>();
+
+        // Add AudioSource component
+        audioSource = gameObject.AddComponent<AudioSource>();
+        audioSource.spatialBlend = 0.7f;  // Reduce 3D effect (0 = 2D, 1 = fully 3D)
+        audioSource.maxDistance = 60f;     // Increase max distance
+        audioSource.rolloffMode = AudioRolloffMode.Linear;
+        audioSource.volume = 1f;           // Set to max volume
+        audioSource.minDistance = 5f;      // Increase minimum distance before falloff
     }
 
     // Called when player presses
@@ -99,7 +111,7 @@ public class Ball : MonoBehaviour
         rb.AddForce(launchDir * force, ForceMode.Impulse);
         
         // Add some torque for rotation
-        rb.AddTorque(Random.insideUnitSphere * force * 0.1f);
+        rb.AddTorque(Random.insideUnitSphere * force * 10f);
     }
 
     // Add this to prevent backward movement through the wall
@@ -119,5 +131,71 @@ public class Ball : MonoBehaviour
                 rb.velocity = new Vector3(rb.velocity.x, rb.velocity.y, 0);
             }
         }
+
+        // Play appropriate collision sound
+        PlayCollisionSound(collision);
+    }
+
+    private void PlayCollisionSound(Collision collision)
+    {
+        if (!audioSource || !soundConfig) return;
+
+        // Get collision force
+        float collisionForce = collision.relativeVelocity.magnitude;
+        
+        // Lower the minimum threshold
+        if (collisionForce < 0.1f) return;
+
+        // Adjust volume scaling to be louder
+        float volume = Mathf.Clamp(collisionForce / 5f, 0.3f, 1f);  
+
+        AudioClip clipToPlay = null;
+
+        // Choose appropriate sound based on what was hit
+        switch (collision.gameObject.tag)
+        {
+            case "Ball":
+                clipToPlay = GetRandomClip(soundConfig.ballCollisionSounds);
+                volume *= 0.2f; // Reduce ball collision volume by half
+                break;
+            case "BasketRing":
+                clipToPlay = GetRandomClip(soundConfig.rimCollisionSounds);
+                break;
+            case "Backboard":
+                clipToPlay = GetRandomClip(soundConfig.backboardCollisionSounds);
+                break;
+        }
+
+        if (clipToPlay)
+        {
+            audioSource.PlayOneShot(clipToPlay, volume);
+        }
+    }
+
+    private AudioClip GetRandomClip(AudioClip[] clips)
+    {
+        if (clips == null || clips.Length == 0) return null;
+        return clips[Random.Range(0, clips.Length)];
+    }
+
+    // Called when ball goes through net
+    public void PlaySwishSound()
+    {
+        if (!audioSource || !soundConfig || !soundConfig.swishSound) return;
+        audioSource.PlayOneShot(soundConfig.swishSound, 1f);
+    }
+
+    // Add this method for bounce-then-score
+    public void PlayBounceInSound()
+    {
+        if (!audioSource || !soundConfig || !soundConfig.bounceInSound) return;
+        audioSource.PlayOneShot(soundConfig.bounceInSound, 1f);
+    }
+
+    // Add this method for dunks
+    public void PlayDunkSound()
+    {
+        if (!audioSource || !soundConfig || !soundConfig.dunkSound) return;
+        audioSource.PlayOneShot(soundConfig.dunkSound, 1f);
     }
 }

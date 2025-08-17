@@ -1,11 +1,12 @@
 DONE
 - get ball
 - throw
-
-DO
 - score
 - time
 - save high score
+- bgm
+
+DO
 - perfect effect (dunk)
 
 - select ball
@@ -17,7 +18,6 @@ UI:
 - select ball
 
 Sound:
-- bgm
 - select ball
 - score
 - perfect dunk

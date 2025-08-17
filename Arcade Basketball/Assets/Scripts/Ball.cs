@@ -65,15 +65,7 @@ public class Ball : MonoBehaviour
                 // Smooth follow
                 transform.position = Vector3.Lerp(transform.position, stickTargetPos, Time.deltaTime * 50f);
             }
-        }
-    }
-
-    // Call this in Update while sticking
-    public void StickToWall()
-    {
-        if (!isSticking) return;
-        transform.position = Vector3.Lerp(transform.position, stickTargetPos, Time.deltaTime * 50f);
-    }
+        }    }
 
     // Called when player releases
     public void Launch(Vector3 releasePoint, float force, float upwardAngle = 0.5f)
@@ -127,16 +119,5 @@ public class Ball : MonoBehaviour
                 rb.velocity = new Vector3(rb.velocity.x, rb.velocity.y, 0);
             }
         }
-    }
-
-    private IEnumerator MoveToFinger(Vector3 targetPos)
-    {
-        float speed = 100f;
-        while (Vector3.Distance(transform.position, targetPos) > 0.05f)
-        {
-            transform.position = Vector3.Lerp(transform.position, targetPos, speed * Time.deltaTime);
-            yield return null;
-        }
-        transform.position = targetPos;
     }
 }

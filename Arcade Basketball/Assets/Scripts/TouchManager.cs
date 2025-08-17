@@ -4,8 +4,8 @@ using UnityEngine;
 public class TouchManager : MonoBehaviour
 {
     [Header("Launch Settings")]
-    [SerializeField] private float throwForce = 80f;
-    [SerializeField] private float throwAngle = 0.5f;
+    [SerializeField] private float throwForce = 85f;
+    [SerializeField] private float throwAngle = 0.6f;
 
     public List<Ball> balls = new List<Ball>();
     private Ball currentBall;

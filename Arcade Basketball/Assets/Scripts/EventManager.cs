@@ -4,50 +4,27 @@ using UnityEngine;
 
 public class EventManager : MonoBehaviour
 {
-    public GameObject cam1;
-    public GameObject cam2;
-    public int manager = 1; // 1 for cam1, 2 for cam2
-
+    // Switch camera from main to cam2
     public void SwitchCamera()
     {
-        GetComponent<Animator>().SetBool("isSelecting", true);
-    }
+        Camera mainCam = Camera.main;
+        Camera cam2 = GameObject.Find("cameraBallSelect").GetComponent<Camera>();
 
-    public void ManageCam()
-    {
-        if (manager == 1)
+        if (mainCam != null && cam2 != null)
         {
-            Cam_1();
-            manager = 2;
-        }
-        else if (manager == 2)
-        {
-            Cam_2();
-            manager = 1;
+            mainCam.enabled = !mainCam.enabled;
+            cam2.enabled = !cam2.enabled;
         }
     }
-
-    public void Cam_1()
+    // Switch camera from cam2 to main
+    public void SwitchCameraBack()
     {
-        if (cam1 != null)
+        Camera mainCam = Camera.main;
+        Camera cam2 = GameObject.Find("cameraBallSelect").GetComponent<Camera>();
+        if (mainCam != null && cam2 != null)
         {
-            cam1.SetActive(true);
-        }
-        if (cam2 != null)
-        {
-            cam2.SetActive(false);
-        }
-    }
-
-    public void Cam_2()
-    {
-        if (cam1 != null)
-        {
-            cam1.SetActive(false);
-        }
-        if (cam2 != null)
-        {
-            cam2.SetActive(true);
+            mainCam.enabled = !mainCam.enabled;
+            cam2.enabled = !cam2.enabled;
         }
     }
 }

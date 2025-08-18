@@ -4,27 +4,81 @@ using UnityEngine;
 
 public class EventManager : MonoBehaviour
 {
-    // Switch camera from main to cam2
+    public GameObject cam1;
+    public GameObject cam2;
+    public int manager = 2; // 1 for cam1, 2 for cam2
+
+    public GameObject mainUI; 
+    public GameObject ballSelectUI;
+
+    private TouchManager touchManager;
+    private ScoreManager scoreManager;
+    private BallSelectionTouch ballSelectionTouch;
+
+    void Start()
+    {
+        touchManager = GetComponent<TouchManager>();
+        scoreManager = GetComponent<ScoreManager>();
+        ballSelectionTouch = GetComponent<BallSelectionTouch>();
+        
+        // Initial setup
+        ballSelectionTouch.enabled = false;
+    }
+
     public void SwitchCamera()
     {
-        Camera mainCam = Camera.main;
-        Camera cam2 = GameObject.Find("cameraBallSelect").GetComponent<Camera>();
-
-        if (mainCam != null && cam2 != null)
+        GetComponent<Animator>().SetBool("isSelecting", true);
+    }
+    public void ManageCam()
+    {
+        if (manager == 1)
         {
-            mainCam.enabled = !mainCam.enabled;
-            cam2.enabled = !cam2.enabled;
+            Cam_1();
+            manager = 2;
+        }
+        else if (manager == 2)
+        {
+            Cam_2();
+            manager = 1;
         }
     }
-    // Switch camera from cam2 to main
-    public void SwitchCameraBack()
+    public void Cam_1()
     {
-        Camera mainCam = Camera.main;
-        Camera cam2 = GameObject.Find("cameraBallSelect").GetComponent<Camera>();
-        if (mainCam != null && cam2 != null)
+        if (cam1 != null)
         {
-            mainCam.enabled = !mainCam.enabled;
-            cam2.enabled = !cam2.enabled;
+            cam1.SetActive(true);
+            touchManager.enabled = true;
+            scoreManager.enabled = true;
+            mainUI.SetActive(true);
+            ballSelectUI.SetActive(false);
+            ballSelectionTouch.enabled = false;
+        }
+        if (cam2 != null)
+        {
+            cam2.SetActive(false);
+        }
+    }
+
+    public void Cam_2()
+    {
+        if (cam1 != null)
+        {
+            cam1.SetActive(false);
+            touchManager.enabled = false;
+            scoreManager.enabled = false;
+            mainUI.SetActive(false);
+            ballSelectUI.SetActive(true);
+            ballSelectionTouch.enabled = true;
+        }
+        if (cam2 != null)
+        {
+            cam2.SetActive(true);
+            // Ensure the camera component is enabled
+            Camera ballSelectCam = cam2.GetComponent<Camera>();
+            if (ballSelectCam != null)
+            {
+                ballSelectCam.enabled = true;
+            }
         }
     }
 }

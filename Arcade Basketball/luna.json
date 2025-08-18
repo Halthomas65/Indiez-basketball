@@ -1,7 +1,7 @@
 {
     "version": "6.4.0",
     "projectId": "09c3f673d9d244568b2c082fb6ba654c",
-    "applicationID": 0,
+    "applicationID": 32256,
     "creativeName": "",
     "pgServer": "EU",
     "window": {
@@ -80,7 +80,7 @@
             "externalSources": [],
             "externalJSLibraries": [],
             "scriptingDefines": [],
-            "msbuildVersion": "",
+            "msbuildVersion": "17.14",
             "monoVersion": "9.0.5",
             "dotnetVersion": ""
         },
